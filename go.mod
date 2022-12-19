@@ -3,7 +3,6 @@ module github.com/leslie-qiwa/react-admin-demo
 go 1.17
 
 require (
-	github.com/akmamun/gorm-pagination/pagination v0.0.0-20220914180003-5c14e6bc1f0a
 	github.com/brianvoe/gofakeit/v6 v6.20.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/glebarez/sqlite v1.6.0

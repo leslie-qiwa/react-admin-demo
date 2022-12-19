@@ -1,27 +1,46 @@
 package controllers
 
 import (
-	"github.com/akmamun/gorm-pagination/pagination"
+	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/leslie-qiwa/react-admin-demo/infra/database"
-	"github.com/leslie-qiwa/react-admin-demo/models"
-	"net/http"
 	"strconv"
+	"strings"
+	"time"
 )
 
-func (ctrl *RAController) GetExamplePaginated(ctx *gin.Context) {
-	var example []models.Example
+type paginateParam struct {
+	offset    int64
+	limit     int64
+	order     string
+	sort      string
+	startDate time.Time
+}
 
-	limit, _ := strconv.Atoi(ctx.GetString("limit"))
-	offset, _ := strconv.Atoi(ctx.GetString("offset"))
-
-	paginateData := pagination.Paginate(&pagination.Param{
-		DB:      database.DB,
-		Offset:  int64(offset),
-		Limit:   int64(limit),
-		OrderBy: "id desc",
-	}, &example)
-
-	ctx.JSON(http.StatusOK, paginateData)
-
+func parseQueryPagination(ctx *gin.Context) (*paginateParam, error) {
+	start, err := strconv.Atoi(ctx.Query("_start"))
+	if err != nil {
+		return nil, err
+	}
+	end, err := strconv.Atoi(ctx.Query("_end"))
+	if err != nil {
+		return nil, err
+	}
+	order := ""
+	switch strings.ToLower(ctx.Query("_order")) {
+	case "":
+		// do nothing
+	case "asc":
+		order = "asc"
+	case "desc":
+		order = "desc"
+	default:
+		return nil, errors.New("not supported _order param")
+	}
+	if ctx.Query("date_gte") != "" {
+		fmt.Println(ctx.Query("date_gte"))
+	}
+	return &paginateParam{
+		offset: int64(start), limit: int64(end - start),
+		order: order, sort: ctx.Query("_sort")}, nil
 }

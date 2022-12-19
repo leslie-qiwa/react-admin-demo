@@ -1,12 +1,13 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/leslie-qiwa/react-admin-demo/helpers"
 	"github.com/leslie-qiwa/react-admin-demo/infra/database"
 	"github.com/leslie-qiwa/react-admin-demo/infra/logger"
 	"github.com/leslie-qiwa/react-admin-demo/models"
 	"net/http"
-	"strconv"
 )
 
 func (ctrl *RAController) CreateCommand(ctx *gin.Context) {
@@ -28,9 +29,24 @@ func (ctrl *RAController) CreateCommand(ctx *gin.Context) {
 }
 
 func (ctrl *RAController) GetCommands(ctx *gin.Context) {
+	query, err := parseQueryPagination(ctx)
+	if err != nil {
+		logger.Errorf("error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	param := helpers.Param{
+		DB:           database.DB,
+		Offset:       query.offset,
+		Limit:        query.limit,
+		ForeignTable: "Baskets",
+	}
+	if query.order != "" {
+		param.OrderBy = "id " + query.order
+	}
 	var cmds []models.Command
-	database.DB.Find(&cmds)
-	ctx.Writer.Header().Set("x-total-count", strconv.Itoa(len(cmds)))
+	paginateData := helpers.Paginate(&param, &cmds)
+	ctx.Writer.Header().Set("x-total-count", fmt.Sprintf("%d", paginateData.TotalRecord))
 	ctx.JSON(http.StatusOK, cmds)
 }
 

@@ -1,12 +1,13 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/leslie-qiwa/react-admin-demo/helpers"
 	"github.com/leslie-qiwa/react-admin-demo/infra/database"
 	"github.com/leslie-qiwa/react-admin-demo/infra/logger"
 	"github.com/leslie-qiwa/react-admin-demo/models"
 	"net/http"
-	"strconv"
 )
 
 func (ctrl *RAController) CreateReview(ctx *gin.Context) {
@@ -28,9 +29,24 @@ func (ctrl *RAController) CreateReview(ctx *gin.Context) {
 }
 
 func (ctrl *RAController) GetReviews(ctx *gin.Context) {
+	query, err := parseQueryPagination(ctx)
+	if err != nil {
+		logger.Errorf("error: %v", err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	param := helpers.Param{
+		DB:     database.DB,
+		Offset: query.offset,
+		Limit:  query.limit,
+	}
+	if query.order != "" {
+		param.OrderBy = "id " + query.order
+	}
 	var reviews []models.Review
-	database.DB.Find(&reviews)
-	ctx.Writer.Header().Set("x-total-count", strconv.Itoa(len(reviews)))
+	paginateData := helpers.Paginate(&param, &reviews)
+	ctx.Writer.Header().Set("x-total-count", fmt.Sprintf("%d", paginateData.TotalRecord))
+
 	ctx.JSON(http.StatusOK, reviews)
 }
 

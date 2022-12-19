@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"github.com/akmamun/gorm-pagination/pagination"
+	"github.com/leslie-qiwa/react-admin-demo/helpers"
 	"github.com/leslie-qiwa/react-admin-demo/infra/database"
 	"net/http"
 	"strconv"
@@ -22,7 +22,7 @@ func (ctrl *RAController) GetHasManyRelationUserData(ctx *gin.Context) {
 	limit, _ := strconv.Atoi(ctx.GetString("limit"))
 	offset, _ := strconv.Atoi(ctx.GetString("offset"))
 
-	paginate := pagination.Paginate(&pagination.Param{
+	paginate := helpers.Paginate(&helpers.Param{
 		DB:     database.DB,
 		Limit:  int64(limit),
 		Offset: int64(offset),
