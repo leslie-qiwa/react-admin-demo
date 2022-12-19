@@ -20,4 +20,6 @@ func ExamplesRoutes(route *gin.Engine) {
 	ra.POST("category/", ctrl.CreateCategory)
 	ra.GET("product/", ctrl.GetProducts)
 	ra.POST("product/", ctrl.CreateProduct)
+	ra.GET("customer/", ctrl.GetCustomers)
+	ra.POST("customer/", ctrl.CreateCustomer)
 }

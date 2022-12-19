@@ -24,7 +24,8 @@ func DBConnection(dbName string) error {
 		loglevel = logger.Info
 	}
 
-	db, err = gorm.Open(sqlite.Open(dbName), &gorm.Config{
+	sdb := sqlite.Open(dbName)
+	db, err = gorm.Open(sdb, &gorm.Config{
 		Logger: logger.Default.LogMode(loglevel),
 	})
 

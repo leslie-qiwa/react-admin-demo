@@ -4,15 +4,25 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	lorem "github.com/drhodes/golorem"
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/leslie-qiwa/react-admin-demo/models"
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
+	"time"
 )
 
-func main() {
-	categories := []string{
+const (
+	ctype       = "application/json"
+	categoryURL = "http://127.0.0.1:8008/v1/category/"
+	productURL  = "http://127.0.0.1:8008/v1/product/"
+	commandURL  = "http://127.0.0.1:8008/v1/command/"
+	customerURL = "http://127.0.0.1:8008/v1/customer/"
+)
+
+var (
+	categories = []string{
 		"animals",
 		"beard",
 		"business",
@@ -27,24 +37,7 @@ func main() {
 		"travel",
 		"water",
 	}
-
-	client := &http.Client{}
-	categoryURL := "http://127.0.0.1:8008/v1/category/"
-	ct := "application/json"
-	for i, v := range categories {
-		cat := models.Category{ID: i + 1, Name: v}
-		content, err := json.Marshal(&cat)
-		if err != nil {
-			log.Fatal(err)
-		}
-		_, err = client.Post(categoryURL, ct, bytes.NewBuffer(content))
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	productURL := "http://127.0.0.1:8008/v1/product/"
-	products := [][]string{
+	products = [][]string{
 		{
 			"Cat Nose",
 			"Dog Grass",
@@ -203,6 +196,26 @@ func main() {
 			"Rainy Day",
 		},
 	}
+)
+
+func weightedBoolean(likelyhood int) bool {
+	return rand.Intn(99) < likelyhood
+}
+
+func main() {
+	client := &http.Client{}
+	for i, v := range categories {
+		cat := models.Category{ID: i + 1, Name: v}
+		content, err := json.Marshal(&cat)
+		if err != nil {
+			log.Fatal(err)
+		}
+		resp, err := client.Post(categoryURL, ctype, bytes.NewBuffer(content))
+		if err != nil {
+			log.Fatal(err)
+		}
+		resp.Body.Close()
+	}
 
 	id := 0
 	for cid, cats := range products {
@@ -220,16 +233,56 @@ func main() {
 				Thumbnail:   fmt.Sprintf("https://marmelab.com/posters/%s-%d.jpeg", categories[0], pid+1),
 				Image:       fmt.Sprintf("https://marmelab.com/posters/%s-%d.jpeg", categories[0], pid+1),
 				Stock:       rand.Intn(150),
-				Description: lorem.Paragraph(10, 30),
+				Description: gofakeit.Paragraph(1, 3, 30, ","),
 			}
 			content, err := json.Marshal(&product)
 			if err != nil {
 				log.Fatal(err)
 			}
-			_, err = client.Post(productURL, ct, bytes.NewBuffer(content))
+			resp, err := client.Post(productURL, ctype, bytes.NewBuffer(content))
 			if err != nil {
 				log.Fatal(err)
 			}
+			resp.Body.Close()
 		}
+	}
+
+	totalCustomers := 900
+	maxOrderedCustomers := 223
+	numberOfCustomers := 0
+	for i := 1; i <= totalCustomers; i++ {
+		customer := models.Customer{
+			ID:            i,
+			FirstName:     gofakeit.FirstName(),
+			LastName:      gofakeit.LastName(),
+			HasNewsletter: true,
+			FirstSeen:     gofakeit.DateRange(time.Now().Add(-5*365*24*time.Hour), time.Now()),
+			LastSeen:      gofakeit.DateRange(time.Now().Add(-5*365*24*time.Hour), time.Now()),
+			Birthday: gofakeit.DateRange(
+				time.Now().Add(-60*365*24*time.Hour),
+				time.Now().Add(-20*365*24*time.Hour)),
+		}
+		customer.Email = customer.FirstName + "." + customer.LastName + "@fake.io"
+		hasOrdered := weightedBoolean(25) && numberOfCustomers < maxOrderedCustomers
+		if hasOrdered {
+			numberOfCustomers++
+			customer.Address = gofakeit.Street()
+			customer.Zipcode = gofakeit.Zip()
+			customer.City = gofakeit.City()
+			customer.StateAbbr = gofakeit.StateAbr()
+			customer.Avatar = "https://marmelab.com/posters/avatar-" + strconv.Itoa(numberOfCustomers) +
+				".jpeg"
+			customer.HasOrdered = true
+			customer.HasNewsletter = weightedBoolean(30)
+		}
+		content, err := json.Marshal(&customer)
+		if err != nil {
+			log.Fatal(err)
+		}
+		resp, err := client.Post(customerURL, ctype, bytes.NewBuffer(content))
+		if err != nil {
+			log.Fatal(err)
+		}
+		resp.Body.Close()
 	}
 }

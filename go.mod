@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/akmamun/gorm-pagination/pagination v0.0.0-20220914180003-5c14e6bc1f0a
+	github.com/brianvoe/gofakeit/v6 v6.20.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/glebarez/sqlite v1.6.0
 	github.com/sirupsen/logrus v1.4.2
@@ -12,7 +13,6 @@ require (
 )
 
 require (
-	github.com/drhodes/golorem v0.0.0-20220328165741-da82e5b29246 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/glebarez/go-sqlite v1.20.0 // indirect

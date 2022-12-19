@@ -1,9 +1,14 @@
 # github.com/akmamun/gorm-pagination/pagination v0.0.0-20220914180003-5c14e6bc1f0a
 ## explicit; go 1.18
 github.com/akmamun/gorm-pagination/pagination
+# github.com/brianvoe/gofakeit v2.2.0+incompatible
+## explicit
+# github.com/brianvoe/gofakeit/v6 v6.20.1
+## explicit; go 1.17
+github.com/brianvoe/gofakeit/v6
+github.com/brianvoe/gofakeit/v6/data
 # github.com/drhodes/golorem v0.0.0-20220328165741-da82e5b29246
 ## explicit
-github.com/drhodes/golorem
 # github.com/fsnotify/fsnotify v1.5.1
 ## explicit; go 1.13
 github.com/fsnotify/fsnotify

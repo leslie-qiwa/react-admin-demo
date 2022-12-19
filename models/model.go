@@ -34,6 +34,7 @@ type Customer struct {
 	Address    string    `json:"address"`
 	Zipcode    string    `json:"zipcode"`
 	City       string    `json:"city"`
+	StateAbbr  string    `json:"stateAbbr"`
 	Avatar     string    `json:"avatar"`
 	Birthday   time.Time `json:"birthday"`
 	FirstSeen  time.Time `json:"first_seen"`
