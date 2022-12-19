@@ -60,32 +60,6 @@ type Product struct {
 	Stock       int     `json:"stock"`
 }
 
-type Basket struct {
-	ProductID int `json:"product_id"`
-	Quantity  int `json:"quantity"`
-}
-
-type Status string
-
-const StatusOrdered Status = "ordered"
-const StatusDelivered Status = "delivered"
-const StatusCanceled Status = "canceled"
-
-type Command struct {
-	ID           int       `json:"id"`
-	Reference    string    `json:"reference"`
-	Date         time.Time `json:"date"`
-	CustomerID   int       `json:"customer_id"`
-	Baskets      []Basket  `json:"basket"`
-	TotalExTaxes float32   `json:"total_ex_taxes"`
-	DeliveryFees float32   `json:"delivery_fees"`
-	TaxRate      float32   `json:"tax_rate"`
-	Taxes        float32   `json:"taxes"`
-	Total        float32   `json:"total"`
-	Status       Status    `json:"status"`
-	Returned     bool      `json:"returned"`
-}
-
 type Invoice struct {
 	ID           int       `json:"id"`
 	Date         time.Time `json:"date"`

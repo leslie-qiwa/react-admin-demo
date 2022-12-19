@@ -1,13 +1,12 @@
 package routers
 
 import (
-	"github.com/leslie-qiwa/react-admin-demo/routers/middleware"
 	"github.com/gin-gonic/gin"
+	"github.com/leslie-qiwa/react-admin-demo/routers/middleware"
 	"github.com/spf13/viper"
 )
 
 func Routes() *gin.Engine {
-
 	environment := viper.GetBool("DEBUG")
 	if environment {
 		gin.SetMode(gin.DebugMode)
@@ -15,8 +14,8 @@ func Routes() *gin.Engine {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	allowedHosts := viper.GetString("ALLOWED_HOSTS")
 	router := gin.New()
+	allowedHosts := viper.GetString("ALLOWED_HOSTS")
 	router.SetTrustedProxies([]string{allowedHosts})
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())

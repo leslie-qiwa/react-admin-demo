@@ -5,4 +5,5 @@ import (
 )
 
 //Add list of model add for migrations
-var migrationModels = []interface{}{&models.Category{}, &models.Product{}, &models.Customer{}}
+var migrationModels = []interface{}{&models.Category{}, &models.Product{}, &models.Customer{}, &models.Command{},
+	&models.Basket{}, &models.Review{}}

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/leslie-qiwa/react-admin-demo/infra/database"
 	"github.com/leslie-qiwa/react-admin-demo/infra/logger"
@@ -20,7 +19,6 @@ func (ctrl *RAController) CreateExample(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	fmt.Printf("-----%v\n", example)
 	err = database.DB.Create(&example).Error
 	if err != nil {
 		logger.Errorf("error: %v", err)

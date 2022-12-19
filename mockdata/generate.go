@@ -15,10 +15,11 @@ import (
 
 const (
 	ctype       = "application/json"
-	categoryURL = "http://127.0.0.1:8008/v1/category/"
-	productURL  = "http://127.0.0.1:8008/v1/product/"
-	commandURL  = "http://127.0.0.1:8008/v1/command/"
-	customerURL = "http://127.0.0.1:8008/v1/customer/"
+	categoryURL = "http://127.0.0.1:8008/v1/category"
+	productURL  = "http://127.0.0.1:8008/v1/product"
+	commandURL  = "http://127.0.0.1:8008/v1/command"
+	customerURL = "http://127.0.0.1:8008/v1/customer"
+	reviewURL   = "http://127.0.0.1:8008/v1/review"
 )
 
 var (
@@ -37,7 +38,7 @@ var (
 		"travel",
 		"water",
 	}
-	products = [][]string{
+	productNames = [][]string{
 		{
 			"Cat Nose",
 			"Dog Grass",
@@ -202,8 +203,20 @@ func weightedBoolean(likelyhood int) bool {
 	return rand.Intn(99) < likelyhood
 }
 
+func weightedArrayElement(values, weights []int) int {
+	histogram := []int{}
+	for idx, v := range weights {
+		for i := 0; i < v; i++ {
+			histogram = append(histogram, values[idx])
+		}
+	}
+	return histogram[rand.Intn(len(histogram))]
+}
+
 func main() {
 	client := &http.Client{}
+
+	// insert category
 	for i, v := range categories {
 		cat := models.Category{ID: i + 1, Name: v}
 		content, err := json.Marshal(&cat)
@@ -217,8 +230,10 @@ func main() {
 		resp.Body.Close()
 	}
 
+	// insert product
 	id := 0
-	for cid, cats := range products {
+	products := []models.Product{}
+	for cid, cats := range productNames {
 		for pid, name := range cats {
 			id += 1
 			width := 10 + rand.Intn(30)
@@ -235,6 +250,7 @@ func main() {
 				Stock:       rand.Intn(150),
 				Description: gofakeit.Paragraph(1, 3, 30, ","),
 			}
+			products = append(products, product)
 			content, err := json.Marshal(&product)
 			if err != nil {
 				log.Fatal(err)
@@ -247,9 +263,12 @@ func main() {
 		}
 	}
 
+	// insert customer
 	totalCustomers := 900
 	maxOrderedCustomers := 223
 	numberOfCustomers := 0
+	realCustomers := []models.Customer{}
+	reviewCustomers := map[int]models.Customer{}
 	for i := 1; i <= totalCustomers; i++ {
 		customer := models.Customer{
 			ID:            i,
@@ -274,6 +293,12 @@ func main() {
 				".jpeg"
 			customer.HasOrdered = true
 			customer.HasNewsletter = weightedBoolean(30)
+			realCustomers = append(realCustomers, customer)
+
+			// only 60% of buyers write reviews
+			if weightedBoolean(60) {
+				reviewCustomers[customer.ID] = customer
+			}
 		}
 		content, err := json.Marshal(&customer)
 		if err != nil {
@@ -285,4 +310,112 @@ func main() {
 		}
 		resp.Body.Close()
 	}
+
+	// insert order
+	reviewID := 1
+	totalCommands := 600
+	taxRate := []float32{0.12, 0.17, 0.2}
+	commands := make([]models.Command, totalCommands)
+	for i := 1; i <= totalCommands; i++ {
+		customer := realCustomers[rand.Intn(len(realCustomers))]
+		command := models.Command{
+			ID:         i,
+			CustomerID: customer.ID,
+			Reference:  gofakeit.LetterN(6),
+			Date:       gofakeit.DateRange(customer.FirstSeen, customer.LastSeen),
+		}
+		nbProducts := weightedArrayElement(
+			[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+			[]int{30, 20, 5, 2, 1, 1, 1, 1, 1, 1},
+		)
+		quantity := weightedArrayElement(
+			[]int{1, 2, 3, 4, 5},
+			[]int{10, 5, 3, 2, 1},
+		)
+		command.Baskets = make([]models.Basket, nbProducts)
+		for i := 0; i < nbProducts; i++ {
+			basket := models.Basket{
+				ProductID: products[rand.Intn(len(products))].ID,
+				Quantity:  quantity,
+			}
+			command.Baskets[i] = basket
+			command.TotalExTaxes += float32(basket.Quantity) * products[basket.ProductID-1].Price
+		}
+		command.DeliveryFees = float32(rand.Intn(500))/100.0 + 3.0
+		command.TaxRate = taxRate[rand.Intn(3)]
+		command.Taxes = (command.TotalExTaxes + command.DeliveryFees) * command.TaxRate
+		command.Total = command.TotalExTaxes + command.DeliveryFees + command.Taxes
+
+		if command.Date.After(time.Now().Add(30*24*time.Hour)) && rand.Intn(2) == 1 {
+			command.Status = models.StatusOrdered
+		} else if rand.Intn(10) == 1 {
+			command.Status = models.StatusCanceled
+		} else {
+			command.Status = models.StatusDelivered
+			if weightedBoolean(10) {
+				command.Returned = true
+			}
+		}
+		commands[i-1] = command
+
+		content, err := json.Marshal(&command)
+		if err != nil {
+			log.Fatal(err)
+		}
+		resp, err := client.Post(commandURL, ctype, bytes.NewBuffer(content))
+		if err != nil {
+			log.Fatal(err)
+		}
+		resp.Body.Close()
+
+		_, hasReview := reviewCustomers[customer.ID]
+		if !hasReview {
+			continue
+		}
+
+		// insert review
+		for _, basket := range command.Baskets {
+			// reviewers review 40% of their products
+			if !weightedBoolean(40) {
+				continue
+			}
+			review := models.Review{
+				ID:         reviewID,
+				CommandID:  command.ID,
+				ProductID:  basket.ProductID,
+				CustomerID: customer.ID,
+				Rating:     1 + rand.Intn(4),
+				Comment:    gofakeit.SentenceSimple(),
+				Date:       gofakeit.DateRange(command.Date, time.Now()),
+			}
+			if review.Date.After(review.Date.Add(-30 * 24 * time.Hour)) {
+				if rand.Intn(4) == 1 {
+					review.Status = models.StatusRejected
+				} else {
+					review.Status = models.StatusAccepted
+				}
+			} else {
+				switch weightedArrayElement([]int{1, 2, 3}, []int{5, 3, 1}) {
+				case 1:
+					review.Status = models.StatusPending
+				case 2:
+					review.Status = models.StatusAccepted
+				case 3:
+					review.Status = models.StatusRejected
+				}
+			}
+			reviewID++
+
+			content, err := json.Marshal(&review)
+			if err != nil {
+				log.Fatal(err)
+			}
+			resp, err := client.Post(reviewURL, ctype, bytes.NewBuffer(content))
+			if err != nil {
+				log.Fatal(err)
+			}
+			resp.Body.Close()
+		}
+	}
+
 }
