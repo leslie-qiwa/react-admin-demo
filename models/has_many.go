@@ -5,27 +5,12 @@ import (
 	"time"
 )
 
-// User has many CreditCards, UserID is the foreign key
-type User struct {
-	ID          uint         `json:"id" gorm:"primary_key"`
-	Name        string       `json:"name"`
-	CreditCards []CreditCard `json:"credit_cards"`
-}
-
-type CreditCard struct {
-	gorm.Model
-
-	ID     uint   `json:"id" gorm:"primary_key"`
-	Number string `json:"number"`
-	UserID uint   `json:"user_id"`
-}
-
 type Status string
 
 const (
 	StatusOrdered   Status = "ordered"
 	StatusDelivered Status = "delivered"
-	StatusCanceled  Status = "canceled"
+	StatusCanceled  Status = "cancelled"
 	StatusAccepted  Status = "accepted"
 	StatusRejected  Status = "rejected"
 	StatusPending   Status = "pending"

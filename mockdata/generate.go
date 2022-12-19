@@ -346,7 +346,7 @@ func main() {
 		command.Taxes = (command.TotalExTaxes + command.DeliveryFees) * command.TaxRate
 		command.Total = command.TotalExTaxes + command.DeliveryFees + command.Taxes
 
-		if command.Date.After(time.Now().Add(30*24*time.Hour)) && rand.Intn(2) == 1 {
+		if command.Date.After(time.Now().Add(-90*24*time.Hour)) && rand.Intn(2) == 1 {
 			command.Status = models.StatusOrdered
 		} else if rand.Intn(10) == 1 {
 			command.Status = models.StatusCanceled

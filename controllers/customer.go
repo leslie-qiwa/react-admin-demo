@@ -8,6 +8,7 @@ import (
 	"github.com/leslie-qiwa/react-admin-demo/infra/logger"
 	"github.com/leslie-qiwa/react-admin-demo/models"
 	"net/http"
+	"strings"
 )
 
 func (ctrl *RAController) CreateCustomer(ctx *gin.Context) {
@@ -29,24 +30,28 @@ func (ctrl *RAController) CreateCustomer(ctx *gin.Context) {
 }
 
 func (ctrl *RAController) GetCustomers(ctx *gin.Context) {
+	ids := ctx.QueryArray("id")
+	if len(ids) != 0 {
+		ctrl.getCustomersByID(ctx, ids)
+		return
+	}
 	query, err := parseQueryPagination(ctx)
 	if err != nil {
 		logger.Errorf("error: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	param := helpers.Param{
-		DB:     database.DB,
-		Offset: query.offset,
-		Limit:  query.limit,
-	}
-	if query.order != "" {
-		param.OrderBy = "id " + query.order
-	}
 	var cus []models.Customer
-	paginateData := helpers.Paginate(&param, &cus)
+	param := mkPaginateParam(query)
+	paginateData := helpers.Paginate(param, &cus)
 	ctx.Writer.Header().Set("x-total-count", fmt.Sprintf("%d", paginateData.TotalRecord))
 
+	ctx.JSON(http.StatusOK, cus)
+}
+
+func (ctrl *RAController) getCustomersByID(ctx *gin.Context, ids []string) {
+	var cus []models.Customer
+	database.DB.Find(&cus, "id in ("+strings.Join(ids, ",")+")")
 	ctx.JSON(http.StatusOK, cus)
 }
 

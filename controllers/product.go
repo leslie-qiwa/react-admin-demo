@@ -37,15 +37,8 @@ func (ctrl *RAController) GetProducts(ctx *gin.Context) {
 	}
 
 	var products []models.Product
-	param := helpers.Param{
-		DB:     database.DB,
-		Offset: query.offset,
-		Limit:  query.limit,
-	}
-	if query.order != "" {
-		param.OrderBy = "id " + query.order
-	}
-	paginateData := helpers.Paginate(&param, &products)
+	param := mkPaginateParam(query)
+	paginateData := helpers.Paginate(param, &products)
 
 	ctx.Writer.Header().Set("x-total-count", fmt.Sprintf("%d", paginateData.TotalRecord))
 	ctx.JSON(http.StatusOK, products)

@@ -35,16 +35,9 @@ func (ctrl *RAController) GetReviews(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	param := helpers.Param{
-		DB:     database.DB,
-		Offset: query.offset,
-		Limit:  query.limit,
-	}
-	if query.order != "" {
-		param.OrderBy = "id " + query.order
-	}
 	var reviews []models.Review
-	paginateData := helpers.Paginate(&param, &reviews)
+	param := mkPaginateParam(query)
+	paginateData := helpers.Paginate(param, &reviews)
 	ctx.Writer.Header().Set("x-total-count", fmt.Sprintf("%d", paginateData.TotalRecord))
 
 	ctx.JSON(http.StatusOK, reviews)

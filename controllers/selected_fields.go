@@ -15,7 +15,7 @@ type SelectedFiledFetch struct {
 
 func (ctrl *RAController) GetSelectedFieldData(ctx *gin.Context) {
 	var selectData []SelectedFiledFetch
-	database.DB.Model(&models.Article{}).Find(&selectData)
+	database.DB.Model(&models.Product{}).Find(&selectData)
 	ctx.JSON(http.StatusOK, selectData)
 
 }
